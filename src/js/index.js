@@ -13,7 +13,7 @@ function VKinit() {
       if(data.session) {
         resolve();
       } else {
-        reject(new Error("Auth failed"));
+        reject(new Error('Auth failed'));
       }
     });
   });
@@ -55,7 +55,7 @@ startBtn.addEventListener('click', () => {
     })
     .then(() => {
       return callAPI('friends.get', {
-        fields: 'country,city'
+        fields: 'country,city,photo_200'
       });
     })
     .then((friends) => {
@@ -69,15 +69,17 @@ startBtn.addEventListener('click', () => {
       clusterer = new ymaps.Clusterer({
         //настройка иконок кластера
         preset: 'islands#invertedDarkBlueClusterIcons',
-        hasBallon: false,
-        hasHint: false
+        clusterDisableClickZoom: true,
+        clusterBalloonContentLayoutWidth: 450,
+        clusterBalloonContentLayoutHeight: 300,
+        clusterBalloonLeftColumnWidth: 230
       });
 
       return friends.items;
     })
     .then(friends => {
-      const promises = friends
-        .filter((n) => n.city && n.country)
+      const friendsList = friends.filter((n) => n.city && n.country);
+      const promises = friendsList
         .map(n => {
           let address = `${n.country.title} ${n.city.title}`;
           return address;
@@ -86,12 +88,24 @@ startBtn.addEventListener('click', () => {
           return getCoords(n);
         });
 
-      return Promise.all(promises);
+      return Promise.all(promises)
+        .then((coords) => {
+          for(let i = 0; i < friendsList.length; i++) {
+            friendsList[i].address = coords[i];
+          }
+          return friendsList;
+        });
     })
-    .then(coords => {
-      const placemarks = coords.map(n => {
-        return new ymaps.Placemark(n, {
-          preset: 'islands#blueHomeCircleIcon'
+    .then(friends => {
+      console.log(friends);
+      const placemarks = friends.map(n => {
+        return new ymaps.Placemark(n.address, {
+          preset: 'islands#blueHomeCircleIcon',
+          balloonContentHeader: `<div class="nickname">${n.first_name} ${n.last_name}</div>`,
+          balloonContentBody: `
+          <a class="profile-link" target="_blank" href="https://vk.com/id${n.id}">link</a>
+          <br>
+          <img class="avatar-in-balloon" src="${n.photo_200}" alt="avatar">`
         });
       });
 
@@ -100,3 +114,4 @@ startBtn.addEventListener('click', () => {
     })
     .catch(e => console.error(e));
 });
+

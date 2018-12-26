@@ -2,6 +2,8 @@
 
 Приложение, которое показывает город и страну проживания Ваших друзей Вконтакте
 
+https://aleksanderkishchak.github.io/friendsLocation/
+
 Чтобы запустить проект:
 
 0. Установите Node.js https://nodejs.org/
